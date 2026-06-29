@@ -355,6 +355,29 @@ input::placeholder,textarea::placeholder{color:#60758E}
   }
 }
 
+
+
+/* ===== FIREBASE ADMIN PANEL ===== */
+.admin-floating{position:fixed;left:18px;bottom:18px;z-index:998;border-radius:99px;padding:13px 16px;background:linear-gradient(135deg,#071A2F,#1F5E93);color:#fff;font-weight:1000;border:1px solid rgba(255,255,255,.45);box-shadow:0 15px 35px rgba(0,0,0,.22)}
+.admin-panel{position:fixed;inset:0;background:rgba(7,26,47,.62);z-index:3000;display:none;align-items:center;justify-content:center;padding:18px}
+.admin-panel.show{display:flex}
+.admin-box{width:min(1100px,100%);max-height:92vh;overflow:auto;background:#eef2f7;border-radius:24px;border:1px solid rgba(255,255,255,.8);box-shadow:0 35px 90px rgba(0,0,0,.35);padding:22px;color:#071A2F}
+.admin-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}
+.admin-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.admin-tabs button,.admin-small-btn{border:0;border-radius:12px;padding:10px 13px;font-weight:950;background:#fff;color:#071A2F;border:1px solid rgba(7,26,47,.12)}
+.admin-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:16px;align-items:start}
+.admin-card{background:rgba(255,255,255,.75);border:1px solid rgba(7,26,47,.12);border-radius:18px;padding:16px}
+.admin-form label{display:block;font-weight:900;margin:9px 0 5px;color:#071A2F}
+.admin-form input,.admin-form select,.admin-form textarea{width:100%;border:1px solid rgba(7,26,47,.16);border-radius:12px;padding:12px;background:#fff;color:#071A2F;outline:0}
+.admin-form textarea{min-height:82px;resize:vertical}
+.admin-list-item{display:grid;grid-template-columns:58px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(7,26,47,.1)}
+.admin-list-item img{width:58px;height:58px;border-radius:12px;object-fit:cover;background:#d9e1eb}
+.admin-muted{color:#536B84;font-size:13px;line-height:1.5}
+.admin-status{padding:10px 12px;border-radius:12px;background:#fff;border:1px solid rgba(7,26,47,.12);margin-bottom:12px;color:#536B84;font-weight:800}
+.admin-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.admin-danger{background:#991b1b!important;color:#fff!important}.admin-ok{background:#166534!important;color:#fff!important}.admin-blue{background:#1F5E93!important;color:#fff!important}
+@media(max-width:850px){.admin-grid{grid-template-columns:1fr}.admin-list-item{grid-template-columns:48px 1fr}.admin-actions{grid-column:1/-1;justify-content:flex-start}.admin-floating{left:12px;bottom:72px}}
+
 </style>
 </head>
 <body>
@@ -365,7 +388,7 @@ input::placeholder,textarea::placeholder{color:#60758E}
       <div><h1>ATARAXIA STORE</h1><small></small></div>
     </a>
     <div class="menu">
-      <a href="#produk">Produk</a><a href="#design">Design</a><a href="#studio">Studio</a><a href="#harga">Harga</a><a href="#checkout">Checkout</a>
+      <a href="#produk">Produk</a><a href="#design">Design</a><a href="#studio">Studio</a><a href="#harga">Harga</a><a href="#checkout">Checkout</a><a href="javascript:openAdmin()">Admin</a>
     </div>
     <div class="nav-actions">
       <button class="icon-btn mobile-btn" onclick="toggleMobile()">☰</button>
@@ -380,6 +403,7 @@ input::placeholder,textarea::placeholder{color:#60758E}
     <a href="#studio" onclick="toggleMobile()">Studio</a>
     <a href="#harga" onclick="toggleMobile()">Harga</a>
     <a href="#checkout" onclick="toggleMobile()">Checkout</a>
+    <a href="javascript:openAdmin();toggleMobile()">Admin</a>
   </div>
 </header>
 
@@ -583,8 +607,100 @@ alt="Mockup">
   </div>
 </div>
 
+
+
+<button class="admin-floating" onclick="openAdmin()">⚙️ Admin</button>
+
+<div class="admin-panel" id="adminPanel">
+  <div class="admin-box">
+    <div class="admin-head">
+      <div>
+        <h2>Panel Admin ATARAXIA STORE</h2>
+        <p class="admin-muted">Login Firebase untuk tambah, edit, hapus produk. Data produk tersimpan di Cloud Firestore.</p>
+      </div>
+      <button class="close" onclick="closeAdmin()">✕</button>
+    </div>
+
+    <div class="admin-status" id="firebaseStatus">Firebase belum dikonfigurasi. Masukkan firebaseConfig di bagian script.</div>
+
+    <div class="admin-card" id="adminLoginBox">
+      <h3>Login Admin</h3>
+      <div class="admin-form">
+        <label>Email Admin</label>
+        <input id="adminEmail" type="email" placeholder="admin@email.com">
+        <label>Password</label>
+        <input id="adminPass" type="password" placeholder="Password Firebase Auth">
+        <button class="btn shine" style="margin-top:12px;width:100%" onclick="adminLogin()">Login Admin</button>
+      </div>
+    </div>
+
+    <div id="adminDashboard" style="display:none">
+      <div class="admin-tabs">
+        <button class="admin-blue" onclick="resetAdminForm()">+ Produk Baru</button>
+        <button onclick="seedDefaultProducts()">Upload Produk Awal ke Firebase</button>
+        <button onclick="adminLogout()">Logout</button>
+      </div>
+
+      <div class="admin-grid">
+        <div class="admin-card">
+          <h3 id="adminFormTitle">Tambah Produk</h3>
+          <div class="admin-form">
+            <input id="adminDocId" type="hidden">
+            <label>Nama Produk</label>
+            <input id="adminName" placeholder="Nama produk">
+            <label>Kategori</label>
+            <select id="adminCat"><option>Kaos</option><option>Outer</option><option>Olahraga</option><option>Merchandise</option></select>
+            <label>Harga</label>
+            <input id="adminPrice" type="number" placeholder="85000">
+            <label>Gambar Depan URL</label>
+            <input id="adminImage" placeholder="https://...jpg/png/webp">
+            <label>Gambar Model/Belakang URL</label>
+            <input id="adminModelImage" placeholder="https://...jpg/png/webp">
+            <label>Deskripsi</label>
+            <textarea id="adminDesc" placeholder="Deskripsi produk"></textarea>
+            <label>Badge / Tag</label>
+            <input id="adminTag" placeholder="Best Seller / New / Premium">
+            <label>Warna tersedia</label>
+            <input id="adminColors" placeholder="Hitam, Putih, Navy">
+            <button class="btn shine" style="width:100%;margin-top:13px" onclick="saveAdminProduct()">Simpan Produk</button>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <h3>Daftar Produk</h3>
+          <p class="admin-muted">Klik Edit untuk mengubah produk. Klik Hapus untuk menghapus dari Firebase.</p>
+          <div id="adminProductList" style="margin-top:10px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+
 <script>
 const STORE_WA = "94705098266";
+
+
+// ===== FIREBASE CONFIG =====
+// GANTI bagian di bawah ini dengan config dari Firebase Console > Project settings > Your apps > Web app.
+const firebaseConfig = {
+  apiKey: "AIzaSyDFf6F6EU9h4hKwViE_xu0Re1_wqu7FqdQ",
+  authDomain: "ataraxia-2026.firebaseapp.com",
+  projectId: "ataraxia-2026",
+  storageBucket: "ataraxia-2026.firebasestorage.app",
+  messagingSenderId: "617393566426",
+  appId: "1:617393566426:web:490330b7719d45f5ceebe3",
+  measurementId: "G-1VX3V0VDWM"
+};
+
+let db = null;
+let auth = null;
+let firebaseReady = false;
+let unsubscribeProducts = null;
+
 
 const colors = [
   {name:"Blue Jeans", hex:"#1f4e79"},
@@ -597,7 +713,7 @@ const colors = [
   {name:"Maroon", hex:"#7f1d1d"}
 ];
 
-const products = [
+let products = [
   {
 id:1,
 name:"New States Apparel Premium Cotton T-shirt 7200",cat:"Kaos",price:85000,image:"https://i.imgur.com/Hx8fz5d.png",modelImage:"https://i.imgur.com/SNsyeSt.png",desc:"Bahan berkualitas premium memadukan rasa ringan dengan tekstur lembut untuk aktivitas harian.",tag:"Best Seller",colors:["Hitam","Blue Jeans","Putih","Cream"]},
@@ -791,10 +907,156 @@ function chatWA(){
   window.open("https://wa.me/" + STORE_WA + "?text=" + encodeURIComponent("Halo ATARAXIA STORE, saya mau konsultasi sablon baju custom."), "_blank");
 }
 
+
+
+// ===== FIREBASE + ADMIN PANEL FUNCTIONS =====
+function isFirebaseConfigFilled(){
+  return firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("ISI_") && !firebaseConfig.projectId.includes("ISI_");
+}
+
+function initFirebase(){
+  if(!isFirebaseConfigFilled()){
+    setFirebaseStatus("Firebase belum aktif. Isi firebaseConfig dulu di file HTML.", false);
+    return;
+  }
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    auth = firebase.auth();
+    firebaseReady = true;
+    setFirebaseStatus("Firebase aktif. Produk akan sinkron dari Cloud Firestore.", true);
+    auth.onAuthStateChanged(user=>{
+      document.getElementById("adminLoginBox").style.display = user ? "none" : "block";
+      document.getElementById("adminDashboard").style.display = user ? "block" : "none";
+      setFirebaseStatus(user ? "Login sebagai: " + user.email : "Firebase aktif. Silakan login admin.", true);
+      renderAdminProducts();
+    });
+    listenFirebaseProducts();
+  }catch(err){
+    setFirebaseStatus("Firebase error: " + err.message, false);
+  }
+}
+
+function setFirebaseStatus(text, ok){
+  const el = document.getElementById("firebaseStatus");
+  if(!el) return;
+  el.textContent = text;
+  el.style.background = ok ? "#dcfce7" : "#fff7ed";
+  el.style.color = ok ? "#166534" : "#9a3412";
+}
+
+function listenFirebaseProducts(){
+  if(!firebaseReady) return;
+  if(unsubscribeProducts) unsubscribeProducts();
+  unsubscribeProducts = db.collection("products").orderBy("id","asc").onSnapshot(snapshot=>{
+    if(snapshot.empty){
+      renderProducts(); initStudio(); updateAll(); renderAdminProducts();
+      return;
+    }
+    products = snapshot.docs.map(doc=>({docId:doc.id, ...doc.data()}));
+    renderProducts(); initStudio(); updateAll(); renderAdminProducts();
+  }, err=>setFirebaseStatus("Gagal membaca produk: " + err.message, false));
+}
+
+function openAdmin(){document.getElementById("adminPanel").classList.add("show");renderAdminProducts();}
+function closeAdmin(){document.getElementById("adminPanel").classList.remove("show");}
+
+function adminLogin(){
+  if(!firebaseReady){alert("Firebase belum dikonfigurasi.");return;}
+  const email = document.getElementById("adminEmail").value.trim();
+  const pass = document.getElementById("adminPass").value;
+  if(!email || !pass){alert("Isi email dan password admin.");return;}
+  auth.signInWithEmailAndPassword(email, pass).catch(err=>alert("Login gagal: " + err.message));
+}
+
+function adminLogout(){ if(auth) auth.signOut(); }
+
+function resetAdminForm(){
+  document.getElementById("adminFormTitle").textContent = "Tambah Produk";
+  ["adminDocId","adminName","adminPrice","adminImage","adminModelImage","adminDesc","adminTag","adminColors"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("adminCat").value = "Kaos";
+}
+
+function fillAdminForm(docId){
+  const p = products.find(x=>x.docId===docId) || products.find(x=>String(x.id)===String(docId));
+  if(!p) return;
+  document.getElementById("adminFormTitle").textContent = "Edit Produk";
+  document.getElementById("adminDocId").value = p.docId || "";
+  document.getElementById("adminName").value = p.name || "";
+  document.getElementById("adminCat").value = p.cat || "Kaos";
+  document.getElementById("adminPrice").value = p.price || 0;
+  document.getElementById("adminImage").value = p.image || "";
+  document.getElementById("adminModelImage").value = p.modelImage || "";
+  document.getElementById("adminDesc").value = p.desc || "";
+  document.getElementById("adminTag").value = p.tag || "";
+  document.getElementById("adminColors").value = (p.colors || []).join(", ");
+  document.querySelector("#adminPanel .admin-box").scrollTo({top:0,behavior:"smooth"});
+}
+
+function readAdminForm(){
+  const name = document.getElementById("adminName").value.trim();
+  const price = Number(document.getElementById("adminPrice").value || 0);
+  const image = document.getElementById("adminImage").value.trim();
+  if(!name || !price || !image){alert("Nama, harga, dan gambar depan wajib diisi.");return null;}
+  return {
+    id: Number(document.getElementById("adminDocId").value ? (products.find(p=>p.docId===document.getElementById("adminDocId").value)?.id || Date.now()) : Date.now()),
+    name,
+    cat: document.getElementById("adminCat").value,
+    price,
+    image,
+    modelImage: document.getElementById("adminModelImage").value.trim() || image,
+    desc: document.getElementById("adminDesc").value.trim(),
+    tag: document.getElementById("adminTag").value.trim() || "New",
+    colors: document.getElementById("adminColors").value.split(",").map(x=>x.trim()).filter(Boolean)
+  };
+}
+
+function saveAdminProduct(){
+  if(!firebaseReady || !auth.currentUser){alert("Login admin dulu.");return;}
+  const data = readAdminForm(); if(!data) return;
+  const docId = document.getElementById("adminDocId").value;
+  const job = docId ? db.collection("products").doc(docId).set(data,{merge:true}) : db.collection("products").add(data);
+  job.then(()=>{resetAdminForm();alert("Produk berhasil disimpan.");}).catch(err=>alert("Gagal simpan: " + err.message));
+}
+
+function deleteAdminProduct(docId){
+  if(!firebaseReady || !auth.currentUser){alert("Login admin dulu.");return;}
+  if(!docId){alert("Produk ini belum ada di Firebase. Upload produk awal dulu.");return;}
+  if(!confirm("Hapus produk ini?")) return;
+  db.collection("products").doc(docId).delete().catch(err=>alert("Gagal hapus: " + err.message));
+}
+
+function renderAdminProducts(){
+  const box = document.getElementById("adminProductList");
+  if(!box) return;
+  if(!products.length){box.innerHTML = '<p class="admin-muted">Belum ada produk.</p>';return;}
+  box.innerHTML = products.map(p=>`
+    <div class="admin-list-item">
+      <img src="${p.image}" onerror="this.style.display='none'">
+      <div><b>${p.name}</b><br><span class="admin-muted">${p.cat || '-'} • ${rupiah(p.price || 0)} • ${p.tag || '-'}</span></div>
+      <div class="admin-actions">
+        <button class="admin-small-btn admin-blue" onclick="fillAdminForm('${p.docId || p.id}')">Edit</button>
+        <button class="admin-small-btn admin-danger" onclick="deleteAdminProduct('${p.docId || ''}')">Hapus</button>
+      </div>
+    </div>`).join("");
+}
+
+function seedDefaultProducts(){
+  if(!firebaseReady || !auth.currentUser){alert("Login admin dulu.");return;}
+  if(!confirm("Upload semua produk yang ada sekarang ke Firebase?")) return;
+  const batch = db.batch();
+  products.forEach(p=>{
+    const ref = p.docId ? db.collection("products").doc(p.docId) : db.collection("products").doc(String(p.id || Date.now() + Math.random()));
+    const {docId, ...clean} = p;
+    batch.set(ref, clean, {merge:true});
+  });
+  batch.commit().then(()=>alert("Produk awal berhasil diupload ke Firebase.")).catch(err=>alert("Gagal upload: " + err.message));
+}
+
 const observer = new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add("show")}),{threshold:.12});
 document.querySelectorAll(".reveal").forEach(el=>observer.observe(el));
 
-renderProducts(); renderDesigns(); initStudio(); updateAll();
+initFirebase(); renderProducts(); renderDesigns(); initStudio(); updateAll();
 </script>
 </body>
 </html>
