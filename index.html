@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ATARAXIA STORE</title>
+  <link rel="stylesheet" href="assets/css/livechat.css">
+  <style>
+    :root{--bg:#07131f;--bg2:#0f2f22;--card:#101c2b;--line:#233246;--green:#24d86b;--text:#f8fafc;--muted:#a8b5c7}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,var(--bg),var(--bg2));color:var(--text)}
+    .nav{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:14px 6%;background:rgba(7,19,31,.72);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.08)}
+    .brand{font-weight:1000;letter-spacing:1px}.nav a{color:#fff;text-decoration:none;margin-left:18px;font-weight:800}.nav .admin{color:var(--green)}
+    .hero{min-height:100vh;display:grid;place-items:center;text-align:center;padding:90px 20px 60px}.hero h1{font-size:clamp(42px,8vw,86px);margin:0;font-weight:1000;letter-spacing:2px}.hero p{color:#d7e0ec;font-size:20px;margin:22px 0}.btn{display:inline-block;margin:8px;padding:14px 22px;border-radius:14px;background:var(--green);color:#06110b;text-decoration:none;font-weight:1000;border:0;cursor:pointer}.btn.dark{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.16)}
+    section{padding:70px 6%}.title{display:flex;justify-content:space-between;gap:18px;align-items:end;margin-bottom:24px}.title h2{font-size:34px;margin:0}.title p{color:var(--muted);margin:8px 0 0}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}.card{background:rgba(16,28,43,.76);border:1px solid rgba(255,255,255,.1);border-radius:22px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.22)}.pic{position:relative;aspect-ratio:1/1.15;background:#0c1524;overflow:hidden}.pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:.35s ease}.pic .back{opacity:0}.card:hover .pic .front{opacity:0}.card:hover .pic .back{opacity:1}.card img{width:100%;object-fit:cover;background:#0c1524}.body{padding:17px}.body h3{margin:0 0 8px;font-size:18px}.body small{color:var(--muted);display:block}.price{font-size:20px;font-weight:1000;color:var(--green);margin-top:12px}.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:40px;background:rgba(255,255,255,.06);border-radius:20px}.footer{text-align:center;color:var(--muted);padding:34px}
+    @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.nav{position:sticky}.nav a{margin-left:10px}.title{display:block}}
+    @media(max-width:540px){.grid{grid-template-columns:1fr}.hero h1{font-size:42px}}
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="brand">ATARAXIA STORE</div>
+    <div><a href="#produk">Produk</a><a class="admin" href="admin.html">Admin</a></div>
+  </header>
+  <section class="hero" id="home">
+    <div>
+      <h1>ATARAXIA STORE</h1>
+      <p>Premium Custom Apparel</p>
+      <a class="btn dark" href="admin.html">Admin</a>
+      <a class="btn" href="#produk">Belanja Sekarang</a>
+    </div>
+  </section>
+  <section id="produk">
+    <div class="title">
+      <div><h2>Produk Terbaru</h2></div>
+      <a class="btn dark" href="#home">Kembali</a>
+    </div>
+    <div class="grid" id="productGrid"><div class="empty">Memuat produk...</div></div>
+  </section>
+  <footer class="footer">© 2026 ATARAXIA STORE</footer>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { firebaseConfig } from "./assets/js/firebase-config.js";
+    const app=initializeApp(firebaseConfig), db=getFirestore(app), grid=document.getElementById('productGrid');
+    const rupiah=n=>'Rp '+Number(n||0).toLocaleString('id-ID');
+    onSnapshot(collection(db,'products'),snap=>{
+      const products=snap.docs.map(d=>({id:d.id,...d.data()}));
+      grid.innerHTML=products.length?products.map(p=>`<article class="card"><div class="pic"><img class="front" src="${p.front||p.image||''}" onerror="this.src='https://placehold.co/600x700/0f172a/ffffff?text=FRONT'"><img class="back" src="${p.back||p.model||p.front||p.image||''}" onerror="this.src='https://placehold.co/600x700/111827/ffffff?text=BACK'"></div><div class="body"><h3>${p.name||'-'}</h3><small>${p.category||'-'} • Stok: ${p.stock||0}</small><div class="price">${rupiah(p.price)}</div></div></article>`).join(''):'<div class="empty">Belum ada produk. Tambahkan produk dari Admin.</div>';
+    },err=>{grid.innerHTML='<div class="empty">Produk belum bisa dimuat. Cek Firestore Rules.</div>';console.error(err)});
+  </script>
+  <script type="module" src="assets/js/livechat-client.js"></script>
+  <script>
+    document.querySelectorAll('a[href="#produk"]').forEach(btn=>{
+      btn.addEventListener('click', e=>{
+        e.preventDefault();
+        const target=document.getElementById('produk');
+        if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+      });
+    });
+  </script>
+</body>
+</html>
